@@ -9,34 +9,12 @@ output:
 ## Loading and preprocessing the data
 
 ```{r, echo = TRUE}
-# Make and/or change working directory if needed
-cdir <- getwd()
-wdir <- "/home/svs/dvs/R_datascientist/Activity_data/"
-zipfilename <- "activity.zip"
-filename <- "activity.csv"
-
-# Put files to correct directory
-if(!file.exists(wdir)){
-  dir.create(wdir)
-}
-
-if(cdir != wdir){
-  setwd(wdir)
-}
-
-# Dowload the archive and extract files 
-
-fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
-download.file(fileURL, zipfilename, method = "curl")
-setwd("./RepData_PeerAssessment1")
-unzip(zipfilename)
-
-# Read data
-data <- read.csv(filename)
+data <- read.csv("activity.csv")
 
 # Load essential libraries
 library(dplyr)
 library(ggplot2)
+library(stringr)
 
 ```
 
