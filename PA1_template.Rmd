@@ -8,18 +8,91 @@ output:
 
 ## Loading and preprocessing the data
 
+```{r, echo = TRUE}
+# Make and/or change working directory if needed
+cdir <- getwd()
+wdir <- "/home/svs/dvs/R_datascientist/Activity_data/"
+zipfilename <- "activity.zip"
+filename <- "activity.csv"
+
+# Put files to correct directory
+if(!file.exists(wdir)){
+  dir.create(wdir)
+}
+
+if(cdir != wdir){
+  setwd(wdir)
+}
+
+# Dowload the archive and extract files 
+
+fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+download.file(fileURL, zipfilename, method = "curl")
+setwd("./RepData_PeerAssessment1")
+unzip(zipfilename)
+
+# Read data
+data <- read.csv(filename)
+
+# Load essential libraries
+library(dplyr)
+library(ggplot2)
+
+```
 
 
 ## What is mean total number of steps taken per day?
+```{r, echo = TRUE}
+# get total number of steps per day
+total_per_day <- data %>% group_by(date) %>% summarize(ttl_steps=sum(steps))
 
+# Plot the histogram
+hist(total_per_day$ttl_steps, main = NULL, xlab = "The total number of steps taken per day")
+
+# Calculate the mean and median of the total number of steps taken per day
+cat("The mean number of steps taken per day: ", mean(total_per_day$ttl_steps, na.rm = TRUE), "\nThe median number of steps taken per day: ", median(total_per_day$ttl_steps, na.rm = TRUE))
+```
 
 
 ## What is the average daily activity pattern?
+```{r, echo=TRUE}
+interval_aver_day <- data %>% group_by(interval) %>% summarise(aver_intrv = mean(steps, na.rm = TRUE))
+plot(interval_aver_day$interval, interval_aver_day$aver_intrv, type = "l", xlab = " 5-minute intervals", ylab = "Average number of steps")
 
+cat("The ",interval_aver_day$interval[which.max(interval_aver_day$aver_intrv)]," 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps.")
+```
 
 
 ## Imputing missing values
 
+### The total number of missing values:  
+```{r, echo = TRUE}
+data_na <- is.na(data)
+sum(data_na)
+```
+### Replace NAs with mean of the all 5-minute intervals (the approach is taken from Tyler Rinker: https://stackoverflow.com/users/1000343/tyler-rinker
+```{r, echo = TRUE}
+impute.mean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
+data <- data %>% mutate(steps = impute.mean(steps))
 
+
+# get total number of steps per day
+total_per_day <- data %>% group_by(date) %>% summarize(ttl_steps=sum(steps))
+
+# Plot the histogram
+hist(total_per_day$ttl_steps, main = NULL, xlab = "The total number of steps taken per day")
+
+# Calculate the mean and median of the total number of steps taken per day
+cat("The mean number of steps taken per day: ", mean(total_per_day$ttl_steps, na.rm = TRUE), "\nThe median number of steps taken per day: ", median(total_per_day$ttl_steps, na.rm = TRUE))
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r, echo = TRUE}
+data <- data %>% mutate(weekdays = weekdays(as.Date(date, "%Y-%m-%d")))
+data$weekdays <- str_replace(data$weekdays, "Monday|Tuesday|Wednesday|Thursday|Friday", "weekdays")
+data$weekdays <- str_replace(data$weekdays, "Saturday|Sunday", "weekends")
+data$weekdays <- as.factor(data$weekdays)
+data.week.pattn <- data %>% group_by(weekdays,interval) %>% summarise(av_act_weekdays = mean(steps))
+ggplot(data.week.pattn, aes(interval, av_act_weekdays)) + geom_line() + ylab("Average number of steps") + facet_grid(weekdays ~ .)
+
+```
